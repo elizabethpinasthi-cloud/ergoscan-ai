@@ -1,0 +1,2896 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>ErgoScan AI</title>
+
+
+<!-- TensorFlow -->
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+
+
+<!-- Pose Detection -->
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+
+
+<style>
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+
+  margin: 0;
+
+  font-family:
+    Inter,
+    Arial,
+    sans-serif;
+
+  background:
+    #f4f8f7;
+
+  color:
+    #18352c;
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header {
+
+  background:
+    linear-gradient(
+      135deg,
+      #064e3b,
+      #059669
+    );
+
+  color: white;
+
+  padding:
+    22px 5%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+}
+
+.logo {
+
+  font-size: 28px;
+
+  font-weight: 900;
+
+}
+
+.subtitle {
+
+  font-size: 13px;
+
+  opacity: .85;
+
+  margin-top: 4px;
+
+}
+
+.connection {
+
+  background:
+    rgba(255,255,255,.15);
+
+  padding:
+    9px 15px;
+
+  border-radius:
+    50px;
+
+  font-size:
+    13px;
+
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.container {
+
+  max-width:
+    1400px;
+
+  margin:
+    auto;
+
+  padding:
+    25px;
+
+}
+
+
+/* =====================================================
+   INPUT PANEL
+===================================================== */
+
+.input-card {
+
+  background:
+    white;
+
+  border-radius:
+    22px;
+
+  padding:
+    22px;
+
+  box-shadow:
+    0 10px 35px
+    rgba(0,0,0,.06);
+
+  margin-bottom:
+    22px;
+
+}
+
+.input-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap:
+    15px;
+
+}
+
+label {
+
+  font-size:
+    13px;
+
+  font-weight:
+    700;
+
+  display:
+    block;
+
+  margin-bottom:
+    7px;
+
+}
+
+input,
+select {
+
+  width:
+    100%;
+
+  padding:
+    13px;
+
+  border:
+    1px solid #d7e5df;
+
+  border-radius:
+    12px;
+
+  font-size:
+    14px;
+
+  outline:
+    none;
+
+}
+
+input:focus,
+select:focus {
+
+  border-color:
+    #10b981;
+
+}
+
+
+/* =====================================================
+   MAIN GRID
+===================================================== */
+
+.main-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1.6fr 1fr;
+
+  gap:
+    22px;
+
+}
+
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
+.camera-card {
+
+  background:
+    #071b15;
+
+  border-radius:
+    25px;
+
+  padding:
+    15px;
+
+  box-shadow:
+    0 15px 45px
+    rgba(0,0,0,.12);
+
+}
+
+.camera-header {
+
+  color:
+    white;
+
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  align-items:
+    center;
+
+  padding:
+    8px 8px 15px;
+
+}
+
+.camera-title {
+
+  font-size:
+    18px;
+
+  font-weight:
+    800;
+
+}
+
+.camera-status {
+
+  background:
+    #123c30;
+
+  color:
+    #6ee7b7;
+
+  padding:
+    7px 12px;
+
+  border-radius:
+    30px;
+
+  font-size:
+    12px;
+
+}
+
+.video-container {
+
+  position:
+    relative;
+
+  width:
+    100%;
+
+  aspect-ratio:
+    16/10;
+
+  overflow:
+    hidden;
+
+  border-radius:
+    18px;
+
+  background:
+    #000;
+
+}
+
+#video {
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  object-fit:
+    cover;
+
+  transform:
+    scaleX(-1);
+
+}
+
+#canvas {
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  transform:
+    scaleX(-1);
+
+}
+
+.camera-guide {
+
+  position:
+    absolute;
+
+  left:
+    25%;
+
+  right:
+    25%;
+
+  top:
+    7%;
+
+  bottom:
+    7%;
+
+  border:
+    2px dashed
+    rgba(255,255,255,.6);
+
+  border-radius:
+    25px;
+
+  pointer-events:
+    none;
+
+}
+
+.guide-text {
+
+  position:
+    absolute;
+
+  bottom:
+    14px;
+
+  left:
+    50%;
+
+  transform:
+    translateX(-50%);
+
+  background:
+    rgba(0,0,0,.7);
+
+  color:
+    white;
+
+  padding:
+    8px 15px;
+
+  border-radius:
+    30px;
+
+  font-size:
+    12px;
+
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.controls {
+
+  display:
+    flex;
+
+  gap:
+    10px;
+
+  flex-wrap:
+    wrap;
+
+  padding:
+    15px 0 5px;
+
+}
+
+button {
+
+  border:
+    none;
+
+  border-radius:
+    12px;
+
+  padding:
+    12px 18px;
+
+  cursor:
+    pointer;
+
+  font-weight:
+    800;
+
+  transition:
+    .2s;
+
+}
+
+button:hover {
+
+  transform:
+    translateY(-1px);
+
+}
+
+.btn-start {
+
+  background:
+    #10b981;
+
+  color:
+    white;
+
+}
+
+.btn-stop {
+
+  background:
+    #334155;
+
+  color:
+    white;
+
+}
+
+.btn-snapshot {
+
+  background:
+    white;
+
+  color:
+    #064e3b;
+
+}
+
+.btn-save {
+
+  width:
+    100%;
+
+  background:
+    #064e3b;
+
+  color:
+    white;
+
+  margin-top:
+    15px;
+
+}
+
+
+/* =====================================================
+   ANALYSIS PANEL
+===================================================== */
+
+.analysis {
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    15px;
+
+}
+
+.score-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    15px;
+
+}
+
+.score-card {
+
+  background:
+    white;
+
+  border-radius:
+    20px;
+
+  padding:
+    20px;
+
+  box-shadow:
+    0 10px 30px
+    rgba(0,0,0,.06);
+
+}
+
+.score-label {
+
+  font-size:
+    12px;
+
+  color:
+    #64748b;
+
+  font-weight:
+    700;
+
+}
+
+.score {
+
+  font-size:
+    50px;
+
+  font-weight:
+    900;
+
+  line-height:
+    1;
+
+  margin:
+    10px 0;
+
+}
+
+.level {
+
+  display:
+    inline-block;
+
+  padding:
+    7px 12px;
+
+  border-radius:
+    30px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    800;
+
+}
+
+
+/* =====================================================
+   ANGLES
+===================================================== */
+
+.angle-card {
+
+  background:
+    white;
+
+  border-radius:
+    20px;
+
+  padding:
+    20px;
+
+  box-shadow:
+    0 10px 30px
+    rgba(0,0,0,.06);
+
+}
+
+.angle-row {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  padding:
+    10px 0;
+
+  border-bottom:
+    1px solid #edf2f0;
+
+}
+
+.angle-row:last-child {
+
+  border-bottom:
+    none;
+
+}
+
+.angle-value {
+
+  font-weight:
+    900;
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.low {
+
+  background:
+    #dcfce7;
+
+  color:
+    #166534;
+
+}
+
+.medium {
+
+  background:
+    #fef3c7;
+
+  color:
+    #92400e;
+
+}
+
+.high {
+
+  background:
+    #fee2e2;
+
+  color:
+    #b91c1c;
+
+}
+
+.very-high {
+
+  background:
+    #450a0a;
+
+  color:
+    white;
+
+}
+
+
+/* =====================================================
+   RECOMMENDATION
+===================================================== */
+
+.recommendation {
+
+  background:
+    linear-gradient(
+      135deg,
+      #ecfdf5,
+      #f0fdf4
+    );
+
+  border:
+    1px solid #bbf7d0;
+
+  border-radius:
+    20px;
+
+  padding:
+    20px;
+
+}
+
+.recommendation h3 {
+
+  margin-top:
+    0;
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:900px) {
+
+  .main-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+  .input-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+}
+
+@media(max-width:600px) {
+
+  .container {
+
+    padding:
+      12px;
+
+  }
+
+  .header {
+
+    padding:
+      17px;
+
+  }
+
+  .logo {
+
+    font-size:
+      22px;
+
+  }
+
+  .score {
+
+    font-size:
+      40px;
+
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+  <div>
+
+    <div class="logo">
+      🦴 ErgoScan AI
+    </div>
+
+    <div class="subtitle">
+      Smart RULA & REBA Posture Assessment
+    </div>
+
+  </div>
+
+  <div
+    id="connection"
+    class="connection"
+  >
+    ● System Ready
+  </div>
+
+</header>
+
+
+<main class="container">
+
+
+<!-- =====================================================
+     DATA
+===================================================== -->
+
+<section class="input-card">
+
+  <div class="input-grid">
+
+    <div>
+
+      <label>
+        ID Pemeriksaan
+      </label>
+
+      <input
+        id="assessmentId"
+        placeholder="Contoh: ERG-001"
+      >
+
+    </div>
+
+
+    <div>
+
+      <label>
+        Nama Pekerja
+      </label>
+
+      <input
+        id="workerName"
+        placeholder="Nama pekerja"
+      >
+
+    </div>
+
+
+    <div>
+
+      <label>
+        Aktivitas
+      </label>
+
+      <input
+        id="activity"
+        placeholder="Contoh: bekerja di meja"
+      >
+
+    </div>
+
+
+    <div>
+
+      <label>
+        Beban / Force (kg)
+      </label>
+
+      <input
+        id="load"
+        type="number"
+        min="0"
+        value="2"
+        step="0.5"
+      >
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<section class="main-grid">
+
+
+<!-- CAMERA -->
+
+<div class="camera-card">
+
+  <div class="camera-header">
+
+    <div class="camera-title">
+      📷 Live Posture Scanner
+    </div>
+
+    <div
+      id="cameraStatus"
+      class="camera-status"
+    >
+      Camera Offline
+    </div>
+
+  </div>
+
+
+  <div class="video-container">
+
+    <video
+      id="video"
+      autoplay
+      playsinline
+      muted
+    ></video>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="camera-guide"></div>
+
+    <div class="guide-text">
+      Posisikan seluruh tubuh terlihat kamera
+    </div>
+
+  </div>
+
+
+  <div class="controls">
+
+    <button
+      class="btn-start"
+      onclick="startCamera()"
+    >
+      📷 Start Camera
+    </button>
+
+    <button
+      class="btn-snapshot"
+      onclick="takeSnapshot()"
+    >
+      📸 Snapshot
+    </button>
+
+    <button
+      class="btn-stop"
+      onclick="stopCamera()"
+    >
+      ⏹ Stop
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ANALYSIS -->
+
+<div class="analysis">
+
+
+  <div class="score-grid">
+
+
+    <div class="score-card">
+
+      <div class="score-label">
+        RULA SCORE
+      </div>
+
+      <div
+        id="rulaScore"
+        class="score"
+      >
+        —
+      </div>
+
+      <span
+        id="rulaLevel"
+        class="level low"
+      >
+        Menunggu
+      </span>
+
+    </div>
+
+
+    <div class="score-card">
+
+      <div class="score-label">
+        REBA SCORE
+      </div>
+
+      <div
+        id="rebaScore"
+        class="score"
+      >
+        —
+      </div>
+
+      <span
+        id="rebaLevel"
+        class="level low"
+      >
+        Menunggu
+      </span>
+
+    </div>
+
+
+  </div>
+
+
+  <div class="angle-card">
+
+    <h3>
+      📐 Posture Angles
+    </h3>
+
+
+    <div class="angle-row">
+
+      <span>
+        Neck
+      </span>
+
+      <span
+        id="neckAngle"
+        class="angle-value"
+      >
+        —
+      </span>
+
+    </div>
+
+
+    <div class="angle-row">
+
+      <span>
+        Trunk
+      </span>
+
+      <span
+        id="trunkAngle"
+        class="angle-value"
+      >
+        —
+      </span>
+
+    </div>
+
+
+    <div class="angle-row">
+
+      <span>
+        Upper Arm
+      </span>
+
+      <span
+        id="upperArmAngle"
+        class="angle-value"
+      >
+        —
+      </span>
+
+    </div>
+
+
+    <div class="angle-row">
+
+      <span>
+        Lower Arm
+      </span>
+
+      <span
+        id="lowerArmAngle"
+        class="angle-value"
+      >
+        —
+      </span>
+
+    </div>
+
+
+    <div class="angle-row">
+
+      <span>
+        Wrist
+      </span>
+
+      <span
+        id="wristAngle"
+        class="angle-value"
+      >
+        —
+      </span>
+
+    </div>
+
+
+    <div class="angle-row">
+
+      <span>
+        Detection Confidence
+      </span>
+
+      <span
+        id="confidence"
+        class="angle-value"
+      >
+        —
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div class="recommendation">
+
+    <h3>
+      💡 Ergonomic Recommendation
+    </h3>
+
+    <div id="recommendationText">
+
+      Aktifkan kamera untuk memulai analisis.
+
+    </div>
+
+  </div>
+
+
+  <button
+    class="btn-save"
+    onclick="saveAssessment()"
+  >
+    💾 Simpan Assessment ke Google Sheets
+  </button>
+
+
+</div>
+
+</section>
+
+</main>
+
+
+<script>
+
+/* =====================================================
+   CONFIGURATION
+===================================================== */
+
+/*
+ * GANTI dengan URL Web App Apps Script
+ */
+
+const GAS_URL =
+  "PASTE_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
+
+
+/* =====================================================
+   GLOBAL VARIABLES
+===================================================== */
+
+let video =
+  document.getElementById("video");
+
+let canvas =
+  document.getElementById("canvas");
+
+let ctx =
+  canvas.getContext("2d");
+
+let stream = null;
+
+let detector = null;
+
+let animationId = null;
+
+let currentResult = null;
+
+let modelReady = false;
+
+
+/* =====================================================
+   INITIALIZE MODEL
+===================================================== */
+
+async function loadModel() {
+
+  setConnection(
+    "⏳ Loading AI model..."
+  );
+
+  try {
+
+    await tf.setBackend("webgl");
+
+    await tf.ready();
+
+    const model =
+      poseDetection.SupportedModels.MoveNet;
+
+    detector =
+      await poseDetection.createDetector(
+        model,
+        {
+          modelType:
+            poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+
+          enableSmoothing:
+            true
+        }
+      );
+
+    modelReady = true;
+
+    setConnection(
+      "● AI Ready"
+    );
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    setConnection(
+      "⚠ AI gagal dimuat"
+    );
+
+    alert(
+      "Model AI gagal dimuat. Periksa koneksi internet."
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   START CAMERA
+===================================================== */
+
+async function startCamera() {
+
+  try {
+
+    if (!modelReady) {
+
+      await loadModel();
+
+    }
+
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+
+      throw new Error(
+        "Browser tidak mendukung kamera."
+      );
+
+    }
+
+
+    stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+
+          facingMode:
+            "environment",
+
+          width: {
+            ideal: 1280
+          },
+
+          height: {
+            ideal: 720
+          }
+
+        },
+
+        audio: false
+
+      });
+
+
+    video.srcObject =
+      stream;
+
+
+    await video.play();
+
+
+    document.getElementById(
+      "cameraStatus"
+    ).textContent =
+      "● Camera Active";
+
+
+    document.getElementById(
+      "cameraStatus"
+    ).style.color =
+      "#6ee7b7";
+
+
+    resizeCanvas();
+
+
+    detectLoop();
+
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    let message =
+      "Kamera tidak dapat digunakan.";
+
+    if (
+      error.name ===
+      "NotAllowedError"
+    ) {
+
+      message +=
+        "\n\nIzin kamera ditolak.";
+
+    }
+
+    if (
+      error.name ===
+      "NotFoundError"
+    ) {
+
+      message +=
+        "\n\nKamera tidak ditemukan.";
+
+    }
+
+    if (
+      error.name ===
+      "NotReadableError"
+    ) {
+
+      message +=
+        "\n\nKamera sedang digunakan aplikasi lain.";
+
+    }
+
+
+    alert(message);
+
+  }
+
+}
+
+
+/* =====================================================
+   STOP CAMERA
+===================================================== */
+
+function stopCamera() {
+
+  if (stream) {
+
+    stream
+      .getTracks()
+      .forEach(
+        track => track.stop()
+      );
+
+  }
+
+
+  stream = null;
+
+
+  if (animationId) {
+
+    cancelAnimationFrame(
+      animationId
+    );
+
+  }
+
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  document.getElementById(
+    "cameraStatus"
+  ).textContent =
+    "Camera Offline";
+
+}
+
+
+/* =====================================================
+   RESIZE CANVAS
+===================================================== */
+
+function resizeCanvas() {
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+}
+
+
+/* =====================================================
+   DETECTION LOOP
+===================================================== */
+
+async function detectLoop() {
+
+  if (!stream ||
+      !detector) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const poses =
+      await detector.estimatePoses(
+        video,
+        {
+          flipHorizontal:
+            true
+        }
+      );
+
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    if (
+      poses.length > 0
+    ) {
+
+      const pose =
+        poses[0];
+
+      drawPose(
+        pose
+      );
+
+
+      analyzePose(
+        pose
+      );
+
+    }
+
+  }
+
+  catch(error) {
+
+    console.error(
+      "Detection error:",
+      error
+    );
+
+  }
+
+
+  animationId =
+    requestAnimationFrame(
+      detectLoop
+    );
+
+}
+
+
+/* =====================================================
+   DRAW SKELETON
+===================================================== */
+
+function drawPose(
+  pose
+) {
+
+  const keypoints =
+    pose.keypoints;
+
+
+  const pairs = [
+
+    ["left_shoulder","right_shoulder"],
+
+    ["left_shoulder","left_elbow"],
+
+    ["left_elbow","left_wrist"],
+
+    ["right_shoulder","right_elbow"],
+
+    ["right_elbow","right_wrist"],
+
+    ["left_shoulder","left_hip"],
+
+    ["right_shoulder","right_hip"],
+
+    ["left_hip","right_hip"],
+
+    ["left_hip","left_knee"],
+
+    ["left_knee","left_ankle"],
+
+    ["right_hip","right_knee"],
+
+    ["right_knee","right_ankle"],
+
+    ["left_eye","right_eye"]
+
+  ];
+
+
+  const kp = {};
+
+
+  keypoints.forEach(
+    point => {
+
+      kp[point.name] =
+        point;
+
+    }
+  );
+
+
+  ctx.lineWidth =
+    4;
+
+  ctx.strokeStyle =
+    "#34d399";
+
+
+  pairs.forEach(
+    pair => {
+
+      const a =
+        kp[pair[0]];
+
+      const b =
+        kp[pair[1]];
+
+
+      if (
+        a &&
+        b &&
+        a.score > .35 &&
+        b.score > .35
+      ) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+          a.x,
+          a.y
+        );
+
+        ctx.lineTo(
+          b.x,
+          b.y
+        );
+
+        ctx.stroke();
+
+      }
+
+    }
+  );
+
+
+  keypoints.forEach(
+    point => {
+
+      if (
+        point.score > .35
+      ) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+          point.x,
+          point.y,
+          6,
+          0,
+          Math.PI * 2
+        );
+
+        ctx.fillStyle =
+          "#ffffff";
+
+        ctx.fill();
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   ANGLE FUNCTION
+===================================================== */
+
+function angle(
+  a,
+  b,
+  c
+) {
+
+  const ab = {
+
+    x: a.x - b.x,
+
+    y: a.y - b.y
+
+  };
+
+
+  const cb = {
+
+    x: c.x - b.x,
+
+    y: c.y - b.y
+
+  };
+
+
+  const dot =
+    ab.x * cb.x +
+    ab.y * cb.y;
+
+
+  const magAB =
+    Math.sqrt(
+      ab.x ** 2 +
+      ab.y ** 2
+    );
+
+
+  const magCB =
+    Math.sqrt(
+      cb.x ** 2 +
+      cb.y ** 2
+    );
+
+
+  if (
+    magAB === 0 ||
+    magCB === 0
+  ) {
+
+    return 0;
+
+  }
+
+
+  let cosine =
+    dot /
+    (magAB * magCB);
+
+
+  cosine =
+    Math.max(
+      -1,
+      Math.min(
+        1,
+        cosine
+      )
+    );
+
+
+  return (
+    Math.acos(cosine) *
+    180 /
+    Math.PI
+  );
+
+}
+
+
+/* =====================================================
+   ANALYZE POSE
+===================================================== */
+
+function analyzePose(
+  pose
+) {
+
+  const kp = {};
+
+  pose.keypoints.forEach(
+    p => {
+
+      kp[p.name] =
+        p;
+
+    }
+  );
+
+
+  const required = [
+
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
+    "nose"
+
+  ];
+
+
+  for (
+    const name of required
+  ) {
+
+    if (
+      !kp[name] ||
+      kp[name].score < .35
+    ) {
+
+      return;
+
+    }
+
+  }
+
+
+  /* --------------------------------------------------
+     SHOULDER CENTER
+  -------------------------------------------------- */
+
+  const shoulder = {
+
+    x:
+      (
+        kp.left_shoulder.x +
+        kp.right_shoulder.x
+      ) / 2,
+
+    y:
+      (
+        kp.left_shoulder.y +
+        kp.right_shoulder.y
+      ) / 2
+
+  };
+
+
+  /* --------------------------------------------------
+     HIP CENTER
+  -------------------------------------------------- */
+
+  const hip = {
+
+    x:
+      (
+        kp.left_hip.x +
+        kp.right_hip.x
+      ) / 2,
+
+    y:
+      (
+        kp.left_hip.y +
+        kp.right_hip.y
+      ) / 2
+
+  };
+
+
+  /* --------------------------------------------------
+     KNEE CENTER
+  -------------------------------------------------- */
+
+  const knee = {
+
+    x:
+      (
+        kp.left_knee.x +
+        kp.right_knee.x
+      ) / 2,
+
+    y:
+      (
+        kp.left_knee.y +
+        kp.right_knee.y
+      ) / 2
+
+  };
+
+
+  /* --------------------------------------------------
+     NECK
+  -------------------------------------------------- */
+
+  const neckAngle =
+    calculateVerticalAngle(
+      kp.nose,
+      shoulder
+    );
+
+
+  /* --------------------------------------------------
+     TRUNK
+  -------------------------------------------------- */
+
+  const trunkAngle =
+    calculateVerticalAngle(
+      shoulder,
+      hip
+    );
+
+
+  /* --------------------------------------------------
+     UPPER ARM
+  -------------------------------------------------- */
+
+  const leftUpper =
+    angle(
+      kp.left_hip,
+      kp.left_shoulder,
+      kp.left_elbow
+    );
+
+
+  const rightUpper =
+    angle(
+      kp.right_hip,
+      kp.right_shoulder,
+      kp.right_elbow
+    );
+
+
+  const upperArm =
+    Math.max(
+      leftUpper,
+      rightUpper
+    );
+
+
+  /* --------------------------------------------------
+     LOWER ARM
+  -------------------------------------------------- */
+
+  const leftLower =
+    angle(
+      kp.left_shoulder,
+      kp.left_elbow,
+      kp.left_wrist
+    );
+
+
+  const rightLower =
+    angle(
+      kp.right_shoulder,
+      kp.right_elbow,
+      kp.right_wrist
+    );
+
+
+  const lowerArm =
+    Math.min(
+      leftLower,
+      rightLower
+    );
+
+
+  /* --------------------------------------------------
+     WRIST
+  -------------------------------------------------- */
+
+  const wrist =
+    calculateWristAngle(
+      kp.left_elbow,
+      kp.left_wrist,
+      kp.left_index || kp.left_wrist
+    );
+
+
+  /* --------------------------------------------------
+     CONFIDENCE
+  -------------------------------------------------- */
+
+  const confidence =
+    pose.keypoints.reduce(
+      (
+        total,
+        point
+      ) =>
+        total +
+        point.score,
+      0
+    ) /
+    pose.keypoints.length;
+
+
+  const rula =
+    calculateRULA({
+
+      neck:
+        neckAngle,
+
+      trunk:
+        trunkAngle,
+
+      upperArm:
+        upperArm,
+
+      lowerArm:
+        lowerArm,
+
+      wrist:
+        wrist,
+
+      load:
+        Number(
+          document.getElementById(
+            "load"
+          ).value
+        ) || 0
+
+    });
+
+
+  const reba =
+    calculateREBA({
+
+      neck:
+        neckAngle,
+
+      trunk:
+        trunkAngle,
+
+      upperArm:
+        upperArm,
+
+      lowerArm:
+        lowerArm,
+
+      wrist:
+        wrist,
+
+      load:
+        Number(
+          document.getElementById(
+            "load"
+          ).value
+        ) || 0
+
+    });
+
+
+  currentResult = {
+
+    rula:
+      rula.score,
+
+    rulaLevel:
+      rula.level,
+
+    reba:
+      reba.score,
+
+    rebaLevel:
+      reba.level,
+
+    confidence:
+      confidence,
+
+    angles: {
+
+      neck:
+        neckAngle,
+
+      trunk:
+        trunkAngle,
+
+      upperArm:
+        upperArm,
+
+      lowerArm:
+        lowerArm,
+
+      wrist:
+        wrist
+
+    }
+
+  };
+
+
+  updateUI(
+    currentResult
+  );
+
+}
+
+
+/* =====================================================
+   VERTICAL ANGLE
+===================================================== */
+
+function calculateVerticalAngle(
+  top,
+  bottom
+) {
+
+  const dx =
+    top.x -
+    bottom.x;
+
+  const dy =
+    bottom.y -
+    top.y;
+
+
+  return Math.abs(
+    Math.atan2(
+      dx,
+      dy
+    ) *
+    180 /
+    Math.PI
+  );
+
+}
+
+
+/* =====================================================
+   WRIST ANGLE
+===================================================== */
+
+function calculateWristAngle(
+  elbow,
+  wrist,
+  hand
+) {
+
+  return angle(
+    elbow,
+    wrist,
+    hand
+  );
+
+}
+
+
+/* =====================================================
+   RULA
+===================================================== */
+
+function calculateRULA(
+  p
+) {
+
+  let score = 1;
+
+
+  /* Neck */
+
+  if (
+    p.neck <= 10
+  ) {
+
+    score += 0;
+
+  }
+
+  else if (
+    p.neck <= 20
+  ) {
+
+    score += 1;
+
+  }
+
+  else {
+
+    score += 2;
+
+  }
+
+
+  /* Trunk */
+
+  if (
+    p.trunk <= 20
+  ) {
+
+    score += 0;
+
+  }
+
+  else if (
+    p.trunk <= 60
+  ) {
+
+    score += 1;
+
+  }
+
+  else {
+
+    score += 2;
+
+  }
+
+
+  /* Upper arm */
+
+  if (
+    p.upperArm > 90
+  ) {
+
+    score += 3;
+
+  }
+
+  else if (
+    p.upperArm > 45
+  ) {
+
+    score += 2;
+
+  }
+
+  else if (
+    p.upperArm > 20
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Lower arm */
+
+  if (
+    p.lowerArm < 60 ||
+    p.lowerArm > 100
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Wrist */
+
+  if (
+    p.wrist > 15
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Force */
+
+  if (
+    p.load > 10
+  ) {
+
+    score += 2;
+
+  }
+
+  else if (
+    p.load >= 2
+  ) {
+
+    score += 1;
+
+  }
+
+
+  score =
+    Math.min(
+      7,
+      Math.max(
+        1,
+        score
+      )
+    );
+
+
+  let level;
+
+
+  if (
+    score <= 2
+  ) {
+
+    level =
+      "Low";
+
+  }
+
+  else if (
+    score <= 4
+  ) {
+
+    level =
+      "Medium";
+
+  }
+
+  else if (
+    score <= 6
+  ) {
+
+    level =
+      "High";
+
+  }
+
+  else {
+
+    level =
+      "Very High";
+
+  }
+
+
+  return {
+
+    score,
+    level
+
+  };
+
+}
+
+
+/* =====================================================
+   REBA
+===================================================== */
+
+function calculateREBA(
+  p
+) {
+
+  let score = 1;
+
+
+  /* Trunk */
+
+  if (
+    p.trunk > 60
+  ) {
+
+    score += 3;
+
+  }
+
+  else if (
+    p.trunk > 20
+  ) {
+
+    score += 2;
+
+  }
+
+  else {
+
+    score += 0;
+
+  }
+
+
+  /* Neck */
+
+  if (
+    p.neck > 20
+  ) {
+
+    score += 2;
+
+  }
+
+  else if (
+    p.neck > 10
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Upper arm */
+
+  if (
+    p.upperArm > 90
+  ) {
+
+    score += 3;
+
+  }
+
+  else if (
+    p.upperArm > 45
+  ) {
+
+    score += 2;
+
+  }
+
+  else if (
+    p.upperArm > 20
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Lower arm */
+
+  if (
+    p.lowerArm < 60 ||
+    p.lowerArm > 100
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Wrist */
+
+  if (
+    p.wrist > 15
+  ) {
+
+    score += 1;
+
+  }
+
+
+  /* Load */
+
+  if (
+    p.load > 10
+  ) {
+
+    score += 2;
+
+  }
+
+  else if (
+    p.load >= 5
+  ) {
+
+    score += 1;
+
+  }
+
+
+  score =
+    Math.min(
+      15,
+      score
+    );
+
+
+  let level;
+
+
+  if (
+    score <= 3
+  ) {
+
+    level =
+      "Negligible";
+
+  }
+
+  else if (
+    score <= 7
+  ) {
+
+    level =
+      "Medium";
+
+  }
+
+  else if (
+    score <= 10
+  ) {
+
+    level =
+      "High";
+
+  }
+
+  else {
+
+    level =
+      "Very High";
+
+  }
+
+
+  return {
+
+    score,
+    level
+
+  };
+
+}
+
+
+/* =====================================================
+   UPDATE UI
+===================================================== */
+
+function updateUI(
+  result
+) {
+
+  document.getElementById(
+    "rulaScore"
+  ).textContent =
+    result.rula;
+
+
+  document.getElementById(
+    "rulaLevel"
+  ).textContent =
+    result.rulaLevel;
+
+
+  document.getElementById(
+    "rebaScore"
+  ).textContent =
+    result.reba;
+
+
+  document.getElementById(
+    "rebaLevel"
+  ).textContent =
+    result.rebaLevel;
+
+
+  document.getElementById(
+    "neckAngle"
+  ).textContent =
+    result.angles.neck.toFixed(1)
+    + "°";
+
+
+  document.getElementById(
+    "trunkAngle"
+  ).textContent =
+    result.angles.trunk.toFixed(1)
+    + "°";
+
+
+  document.getElementById(
+    "upperArmAngle"
+  ).textContent =
+    result.angles.upperArm.toFixed(1)
+    + "°";
+
+
+  document.getElementById(
+    "lowerArmAngle"
+  ).textContent =
+    result.angles.lowerArm.toFixed(1)
+    + "°";
+
+
+  document.getElementById(
+    "wristAngle"
+  ).textContent =
+    result.angles.wrist.toFixed(1)
+    + "°";
+
+
+  document.getElementById(
+    "confidence"
+  ).textContent =
+    (
+      result.confidence *
+      100
+    ).toFixed(0)
+    + "%";
+
+
+  setLevelColor(
+    "rulaLevel",
+    result.rula
+  );
+
+
+  setLevelColor(
+    "rebaLevel",
+    result.reba
+  );
+
+
+  updateRecommendation(
+    result
+  );
+
+}
+
+
+/* =====================================================
+   LEVEL COLOR
+===================================================== */
+
+function setLevelColor(
+  id,
+  score
+) {
+
+  const el =
+    document.getElementById(
+      id
+    );
+
+
+  el.className =
+    "level";
+
+
+  if (
+    score <= 2
+  ) {
+
+    el.classList.add(
+      "low"
+    );
+
+  }
+
+  else if (
+    score <= 4
+  ) {
+
+    el.classList.add(
+      "medium"
+    );
+
+  }
+
+  else if (
+    score <= 7
+  ) {
+
+    el.classList.add(
+      "high"
+    );
+
+  }
+
+  else {
+
+    el.classList.add(
+      "very-high"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   RECOMMENDATION
+===================================================== */
+
+function updateRecommendation(
+  result
+) {
+
+  let text =
+    "";
+
+
+  if (
+    result.rula >= 5 ||
+    result.reba >= 8
+  ) {
+
+    text +=
+      "<b>⚠ Perlu dilakukan evaluasi ergonomi.</b><br><br>";
+
+    text +=
+      "• Evaluasi posisi leher dan batang tubuh.<br>";
+
+    text +=
+      "• Kurangi sudut fleksi ekstrem.<br>";
+
+    text +=
+      "• Sesuaikan tinggi meja atau area kerja.<br>";
+
+    text +=
+      "• Evaluasi beban dan durasi aktivitas.<br>";
+
+  }
+
+  else {
+
+    text +=
+      "✓ Postur terdeteksi relatif terkendali berdasarkan screening otomatis.<br><br>";
+
+    text +=
+      "Tetap lakukan evaluasi berkala dan verifikasi manual.";
+
+  }
+
+
+  document.getElementById(
+    "recommendationText"
+  ).innerHTML =
+    text;
+
+}
+
+
+/* =====================================================
+   SNAPSHOT
+===================================================== */
+
+function takeSnapshot() {
+
+  if (!stream) {
+
+    alert(
+      "Aktifkan kamera terlebih dahulu."
+    );
+
+    return;
+
+  }
+
+
+  const snapshot =
+    document.createElement(
+      "canvas"
+    );
+
+
+  snapshot.width =
+    video.videoWidth;
+
+  snapshot.height =
+    video.videoHeight;
+
+
+  const context =
+    snapshot.getContext(
+      "2d"
+    );
+
+
+  context.drawImage(
+    video,
+    0,
+    0
+  );
+
+
+  const image =
+    snapshot.toDataURL(
+      "image/jpeg",
+      .85
+    );
+
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+
+  link.href =
+    image;
+
+  link.download =
+    "ergoscan-snapshot.jpg";
+
+  link.click();
+
+}
+
+
+/* =====================================================
+   SAVE TO GOOGLE SHEETS
+===================================================== */
+
+async function saveAssessment() {
+
+  if (!currentResult) {
+
+    alert(
+      "Belum ada hasil analisis."
+    );
+
+    return;
+
+  }
+
+
+  const data = {
+
+    id:
+      document.getElementById(
+        "assessmentId"
+      ).value,
+
+    nama:
+      document.getElementById(
+        "workerName"
+      ).value,
+
+    aktivitas:
+      document.getElementById(
+        "activity"
+      ).value,
+
+    beban:
+      document.getElementById(
+        "load"
+      ).value,
+
+    rula:
+      currentResult.rula,
+
+    rulaLevel:
+      currentResult.rulaLevel,
+
+    reba:
+      currentResult.reba,
+
+    rebaLevel:
+      currentResult.rebaLevel,
+
+    confidence:
+      currentResult.confidence,
+
+    angles:
+      currentResult.angles
+
+  };
+
+
+  try {
+
+    await fetch(
+      GAS_URL,
+      {
+
+        method:
+          "POST",
+
+        mode:
+          "no-cors",
+
+        headers: {
+
+          "Content-Type":
+            "text/plain;charset=utf-8"
+
+        },
+
+        body:
+          JSON.stringify(
+            data
+          )
+
+      }
+    );
+
+
+    alert(
+      "✓ Assessment berhasil dikirim ke Google Sheets."
+    );
+
+  }
+
+  catch(error) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "Gagal menyimpan assessment."
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CONNECTION
+===================================================== */
+
+function setConnection(
+  text
+) {
+
+  document.getElementById(
+    "connection"
+  ).textContent =
+    text;
+
+}
+
+
+/* =====================================================
+   LOAD
+===================================================== */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    loadModel();
+
+  }
+);
+
+</script>
+
+</body>
+
+</html>
